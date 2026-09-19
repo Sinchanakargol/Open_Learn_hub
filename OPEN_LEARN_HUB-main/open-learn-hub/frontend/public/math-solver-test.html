@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Solver Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .canvas-container {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Math Solver Test</h1>
+    <div class="canvas-container">
+        <canvas id="drawingCanvas" width="400" height="400"></canvas>
+    </div>
+    <div>
+        <button onclick="clearCanvas()">Clear</button>
+        <button onclick="recognizeEquation()">Solve</button>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let model = null;
+
+        // Drawing setup
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+
+        // Load the model
+        async function loadModel() {
+            try {
+                model = await tf.loadLayersModel('/models/tfjs_math_cnn_model/model.json');
+                console.log('Model loaded successfully');
+            } catch (error) {
+                console.error('Error loading model:', error);
+                document.getElementById('result').textContent = 'Error loading model: ' + error.message;
+            }
+        }
+
+        // Drawing event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        function startDrawing(e) {
+            isDrawing = true;
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            ctx.beginPath();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('result').textContent = '';
+        }
+
+        async function recognizeEquation() {
+            if (!model) {
+                document.getElementById('result').textContent = 'Model not loaded yet';
+                return;
+            }
+
+            try {
+                // Preprocess the canvas image
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const tensor = tf.browser.fromPixels(imageData, 1)
+                    .resizeBilinear([28, 28])
+                    .expandDims(0)
+                    .toFloat()
+                    .div(255.0);
+
+                // Get prediction
+                const prediction = await model.predict(tensor).data();
+                const recognizedSymbols = interpretPrediction(prediction);
+                
+                document.getElementById('result').innerHTML = `
+                    <p>Recognized equation: ${recognizedSymbols.join('')}</p>
+                    <p>Processing...</p>
+                `;
+
+                // Send to backend for solving
+                const response = await fetch('/api/math-solver/solve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ equation: recognizedSymbols.join('') })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('result').innerHTML = `
+                        <p>Recognized equation: ${recognizedSymbols.join('')}</p>
+                        <p>Solution: ${result.result}</p>
+                        <div>Steps:</div>
+                        ${result.steps.map(step => `<p>${step.description}: ${step.equation}</p>`).join('')}
+                    `;
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error recognizing equation:', error);
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function interpretPrediction(prediction) {
+            // Map the predictions to symbols
+            const symbols = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '×', '÷', '=', '.'];
+            const maxIndex = prediction.indexOf(Math.max(...prediction));
+            return symbols[maxIndex];
+        }
+
+        // Load the model when the page loads
+        loadModel();
+    </script>
+</body>
+</html>

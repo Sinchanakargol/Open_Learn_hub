@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "start": "cd open-learn-hub/backend && npm start",
+    "build": "cd open-learn-hub/backend && npm install",
+    "install-backend": "cd open-learn-hub/backend && npm install",
+    "install-ai": "cd open-learn-hub/ai-service && pip install -r requirements.txt"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.22.0",
+    "mathjs": "^15.0.0",
+    "react-canvas-draw": "^1.2.1"
+  }
+}

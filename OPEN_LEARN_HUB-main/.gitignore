@@ -1,0 +1,88 @@
+# Root-level ignore for generated files and local config
+
+# Node
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+package-lock.json.*
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.venv/
+venv/
+**/venv/
+ENV/
+.env/*
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE/editor
+.vscode/
+.idea/
+*.suo
+*.ntvs_analysis.dat
+*.njsproj
+*.sln
+*.swp
+
+# Python caches
+.mypy_cache/
+.pytest_cache/
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build/dist
+dist/
+build/
+coverage/
+coverage.*
+*.cover
+*.coverage
+
+# Open Learn Hub specific
+open-learn-hub/backend/temp/
+open-learn-hub/backend/.env
+open-learn-hub/backend/node_modules/
+open-learn-hub/frontend/node_modules/
+open-learn-hub/frontend/dist/
+open-learn-hub/frontend/.env
+open-learn-hub/ai-service/venv/
+open-learn-hub/ai-service/__pycache__/
+open-learn-hub/ai-service/*.pyc
+open-learn-hub/ai-service/*.pyo
+open-learn-hub/ai-service/*.pyd
+open-learn-hub/ai-service/saved_models/
+
+# Local OS / environment
+*.env.local
+*.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+~*
+
+# Ignore built npm files from local environment
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+*.npy 
